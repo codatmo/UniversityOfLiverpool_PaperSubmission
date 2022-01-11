@@ -125,15 +125,15 @@ transformed data {
   real sigma_dL = 3.00;
   real mu_dI = 5.00;
   real sigma_dI = 4.00;
-  real mu_dT = 13.00;
-  real sigma_dT = 4.00;
+  real mu_dP = 13.00;
+  real sigma_dP = 4.00;
 }
 parameters {
   real<lower=0, upper=1> initial_state_raw[2];
   real<lower=0> beta[n_beta_pieces+1];
   real<lower=0> dL;
   real<lower=0> dI;
-  real<lower=0> dT;
+  real<lower=0> dP;
   real<lower=0, upper=1> omega;
   real<lower=0> reciprocal_phi_deaths;
   real<lower=0> reciprocal_phi_hospital_admissions;
@@ -188,7 +188,7 @@ transformed parameters {
               to_vector(beta_left_t)));
   nu = 2.0/dL;
   gamma = 2.0/dI;
-  kappa = 2.0/dT;
+  kappa = 2.0/dP;
   phi_deaths = 1.0 / reciprocal_phi_deaths;
   phi_hospital_admissions = 1.0 / reciprocal_phi_hospital_admissions;
   phi_calls_111 = 1.0 / reciprocal_phi_calls_111;
@@ -254,7 +254,7 @@ model {
   beta[2:] ~ normal(beta[:n_beta_pieces], 0.01);
   dL ~ normal(mu_dL, sigma_dL);
   dI ~ normal(mu_dI, sigma_dI);
-  dT ~ normal(mu_dT, sigma_dT);
+  dP ~ normal(mu_dP, sigma_dP);
   omega ~ beta(5.7, 624.1);
   reciprocal_phi_deaths ~ exponential(5);
   reciprocal_phi_hospital_admissions ~ exponential(5);
@@ -270,14 +270,14 @@ generated quantities {
   vector[T+1] I;
   vector[T] effective_reproduction_number;
   vector[T-7] growth_rate;
-  int pred_deaths[deaths_length+7];
+  int pred_deaths[deaths_length];
   int pred_hospital_admissions[hospital_admissions_length];
   int pred_calls_111[calls_111_length];
 
   I = I1 + I2;
   effective_reproduction_number = (daily_infections ./ I[:T])*dI;
   growth_rate = (log(daily_infections[8:]) - log(daily_infections[:T-7]))/7.0;
-  pred_deaths = neg_binomial_2_rng(daily_deaths[deaths_start:deaths_start+deaths_length-1+7], phi_deaths);
+  pred_deaths = neg_binomial_2_rng(daily_deaths[deaths_start:deaths_start+deaths_length-1], phi_deaths);
   pred_hospital_admissions = neg_binomial_2_rng(daily_hospital_admissions[hospital_admissions_start:hospital_admissions_start+hospital_admissions_length-1], phi_hospital_admissions);
   pred_calls_111 = neg_binomial_2_rng(daily_calls_111[calls_111_start:calls_111_start+calls_111_length-1], phi_calls_111);
 }
